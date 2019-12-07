@@ -232,58 +232,12 @@ summary {
 <p>In this in project we are looking at the Jobs Data set for Classification</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShjYXJldClcbmBgYCJ9 -->
-<pre class="r"><code>library(caret)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShjYXJldClcbmxpYnJhcnkodGV4dDJ2ZWMpXG5saWJyYXJ5KHRtKVxubGlicmFyeShkcGx5cilcbmBgYCJ9 -->
+<pre class="r"><code>library(caret)
+library(text2vec)
+library(tm)
+library(dplyr)</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiBsYXR0aWNlXG5Mb2FkaW5nIHJlcXVpcmVkIHBhY2thZ2U6IGdncGxvdDJcblJlZ2lzdGVyZWQgUzMgbWV0aG9kIG92ZXJ3cml0dGVuIGJ5ICdkcGx5cic6XG4gIG1ldGhvZCAgICAgICAgICAgZnJvbVxuICBwcmludC5yb3d3aXNlX2RmICAgICBcblJlZ2lzdGVyZWQgUzMgbWV0aG9kIG92ZXJ3cml0dGVuIGJ5ICdkYXRhLnRhYmxlJzpcbiAgbWV0aG9kICAgICAgICAgICBmcm9tXG4gIHByaW50LmRhdGEudGFibGUgICAgIFxuIn0= -->
-<pre><code>Loading required package: lattice
-Loading required package: ggplot2
-Registered S3 method overwritten by 'dplyr':
-  method           from
-  print.rowwise_df     
-Registered S3 method overwritten by 'data.table':
-  method           from
-  print.data.table     </code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0ZXh0MnZlYylcbmBgYCJ9 -->
-<pre class="r"><code>library(text2vec)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoidGV4dDJ2ZWMgaXMgc3RpbGwgaW4gYmV0YSB2ZXJzaW9uIC0gQVBJcyBjYW4gYmUgY2hhbmdlZC5cbkZvciB0dXRvcmlhbHMgYW5kIGV4YW1wbGVzIHZpc2l0IGh0dHA6Ly90ZXh0MnZlYy5vcmcuXG5cbkZvciBGQVEgcmVmZXIgdG9cbiAgMS4gaHR0cHM6Ly9zdGFja292ZXJmbG93LmNvbS9xdWVzdGlvbnMvdGFnZ2VkL3RleHQydmVjP3NvcnQ9bmV3ZXN0XG4gIDIuIGh0dHBzOi8vZ2l0aHViLmNvbS9kc2VsaXZhbm92L3RleHQydmVjL2lzc3Vlcz91dGY4PSVFMiU5QyU5MyZxPWlzJTNBaXNzdWUlMjBsYWJlbCUzQXF1ZXN0aW9uXG5JZiB5b3UgaGF2ZSBxdWVzdGlvbnMgcGxlYXNlIHBvc3QgdGhlbSBhdCBTdGFja092ZXJmbG93IGFuZCBtYXJrIHdpdGggJ3RleHQydmVjJyB0YWcuXG4ifQ== -->
-<pre><code>text2vec is still in beta version - APIs can be changed.
-For tutorials and examples visit http://text2vec.org.
-
-For FAQ refer to
-  1. https://stackoverflow.com/questions/tagged/text2vec?sort=newest
-  2. https://github.com/dselivanov/text2vec/issues?utf8=%E2%9C%93&amp;q=is%3Aissue%20label%3Aquestion
-If you have questions please post them at StackOverflow and mark with 'text2vec' tag.</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0bSlcbmBgYCJ9 -->
-<pre class="r"><code>library(tm)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiBOTFBcblxuQXR0YWNoaW5nIHBhY2thZ2U6IOKAmE5MUOKAmVxuXG5UaGUgZm9sbG93aW5nIG9iamVjdCBpcyBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOmdncGxvdDLigJk6XG5cbiAgICBhbm5vdGF0ZVxuIn0= -->
-<pre><code>Loading required package: NLP
-
-Attaching package: ‘NLP’
-
-The following object is masked from ‘package:ggplot2’:
-
-    annotate</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkcGx5cilcbmBgYCJ9 -->
-<pre class="r"><code>library(dplyr)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG5BdHRhY2hpbmcgcGFja2FnZTog4oCYZHBseXLigJlcblxuVGhlIGZvbGxvd2luZyBvYmplY3RzIGFyZSBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOnN0YXRz4oCZOlxuXG4gICAgZmlsdGVyLCBsYWdcblxuVGhlIGZvbGxvd2luZyBvYmplY3RzIGFyZSBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOmJhc2XigJk6XG5cbiAgICBpbnRlcnNlY3QsIHNldGRpZmYsIHNldGVxdWFsLCB1bmlvblxuIn0= -->
-<pre><code>
-Attaching package: ‘dplyr’
-
-The following objects are masked from ‘package:stats’:
-
-    filter, lag
-
-The following objects are masked from ‘package:base’:
-
-    intersect, setdiff, setequal, union</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -291,14 +245,11 @@ The following objects are masked from ‘package:base’:
 <h1>Data</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI0pvYnNEYXRhIDwtIHJlYWQuY3N2KFwiSm9ic0RhdGEuY3N2XCIsIHN0cmluZ3NBc0ZhY3RvcnM9RkFMU0UsIGhlYWRlciA9IFRSVUUpXG4jc2F2ZVJEUyhKb2JzRGF0YSwgZmlsZT1cIkpvYnNEYXRhLlJkc1wiKVxuSm9ic0RhdGEgPC0gcmVhZFJEUyhcIkpvYnNEYXRhLlJkc1wiKVxuYGBgIn0= -->
-<pre class="r"><code>#JobsData &lt;- read.csv(&quot;JobsData.csv&quot;, stringsAsFactors=FALSE, header = TRUE)
-#saveRDS(JobsData, file=&quot;JobsData.Rds&quot;)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuSm9ic0RhdGEgPC0gcmVhZC5jc3YoXCJKb2JzRGF0YS5jc3ZcIiwgc3RyaW5nc0FzRmFjdG9ycz1GQUxTRSwgaGVhZGVyID0gVFJVRSlcbnNhdmVSRFMoSm9ic0RhdGEsIGZpbGU9XCJKb2JzRGF0YS5SZHNcIilcbkpvYnNEYXRhIDwtIHJlYWRSRFMoXCJKb2JzRGF0YS5SZHNcIilcbmBgYCJ9 -->
+<pre class="r"><code>JobsData &lt;- read.csv(&quot;JobsData.csv&quot;, stringsAsFactors=FALSE, header = TRUE)
+saveRDS(JobsData, file=&quot;JobsData.Rds&quot;)
 JobsData &lt;- readRDS(&quot;JobsData.Rds&quot;)</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiY2Fubm90IG9wZW4gY29tcHJlc3NlZCBmaWxlICdKb2JzRGF0YS5SZHMnLCBwcm9iYWJsZSByZWFzb24gJ05vIHN1Y2ggZmlsZSBvciBkaXJlY3RvcnknRXJyb3IgaW4gZ3pmaWxlKGZpbGUsIFwicmJcIikgOiBjYW5ub3Qgb3BlbiB0aGUgY29ubmVjdGlvblxuIn0= -->
-<pre><code>cannot open compressed file 'JobsData.Rds', probable reason 'No such file or directory'Error in gzfile(file, &quot;rb&quot;) : cannot open the connection</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
