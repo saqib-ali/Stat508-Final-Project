@@ -1,19 +1,111 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Stat 508 - Final Project"
+output:
+  pdf_document: default
+  html_notebook: default
+  
+Author: "Adam Behrendorff, Nicholas Napier, Saqib Ali"
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+# Introduction
+In this in project we are looking at the Jobs Data set for Classification
 
 ```{r}
-plot(cars)
+library(caret)
+library(text2vec)
+library(tm)
+library(dplyr)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+# Data
+```{r}
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+#JobsData <- read.csv("JobsData.csv", stringsAsFactors=FALSE, header = TRUE)
+#saveRDS(JobsData, file="JobsData.Rds")
+JobsData <- readRDS("JobsData.Rds")
 
+```
+
+
+```{r}
+JobsData$id <- seq.int(1:nrow(JobsData))
+
+```
+
+```{r}
+train <- createDataPartition(JobsData$JobType, p = .1, list=FALSE)
+jobsdata.training.subset <- JobsData[train,]
+jobsdata.testing.subset <- JobsData[-train,]
+```
+
+
+```{r}
+
+
+#corpus <- VCorpus(VectorSource(jobsdata.training.data$JobDescription))
+
+#tdm <- DocumentTermMatrix(corpus, list(removePunctuation = TRUE, stopwords = TRUE, stemming = TRUE, removeNumbers = TRUE))
+#train <- as.matrix(tdm)
+#train <- as.data.frame(train)
+#train$JobTypeLabel <-  jobsdata.training.data$JobType
+```
+
+
+
+```{r}
+prep_fun = tolower
+tok_fun = word_tokenizer
+
+it_train = itoken(jobsdata.training.subset$JobDescription, 
+             preprocessor = prep_fun, 
+             tokenizer = tok_fun, 
+             ids = jobsdata.training.subset$id, 
+             progressbar = FALSE)
+vocab = create_vocabulary(it_train)
+
+
+```
+
+```{r}
+train_tokens = jobsdata.training.subset$JobDescription %>% prep_fun %>% tok_fun
+it_train = itoken(train_tokens, 
+                  ids = jobsdata.training.subset$id,
+                  # turn off progressbar because it won't look nice in rmd
+                  progressbar = FALSE)
+
+vocab = create_vocabulary(it_train)
+vocab
+```
+
+
+```{r}
+vectorizer = vocab_vectorizer(vocab)
+t1 = Sys.time()
+dtm_train = create_dtm(it_train, vectorizer)
+dtm_train <- as.matrix(dtm_train)
+dtm_train <- as.data.frame(dtm_train)
+
+```
+
+
+
+```{r}
+dim(dtm_train)
+dim(jobsdata.training.subset)
+```
+
+
+```{r}
+dtm_train$JobTypeReponse <- jobsdata.training.subset$JobType
+```
+
+
+```{r}
+fit <- glm(JobTypeReponse ~ ., data = dtm_train, family=binomial)
+```
+
+# Analysis
+
+# Conclusion
