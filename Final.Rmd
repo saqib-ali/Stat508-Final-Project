@@ -35,7 +35,7 @@ JobsData$id <- seq.int(1:nrow(JobsData))
 ```
 
 ```{r}
-train <- createDataPartition(JobsData$JobType, p = .1, list=FALSE)
+train <- createDataPartition(JobsData$JobType, p = .5, list=FALSE)
 jobsdata.training.subset <- JobsData[train,]
 jobsdata.testing.subset <- JobsData[-train,]
 ```
@@ -98,12 +98,36 @@ dim(jobsdata.training.subset)
 
 
 ```{r}
-dtm_train$JobTypeReponse <- jobsdata.training.subset$JobType
+dtm_train$JobTypeReponse <- ifelse(jobsdata.training.subset$JobType=="Data Science", 1, 0)
 ```
 
 
 ```{r}
 fit <- glm(JobTypeReponse ~ ., data = dtm_train, family=binomial)
+```
+
+
+```{r}
+it_test = jobsdata.testing.subset$JobDescription %>% 
+  prep_fun %>% tok_fun %>% 
+  # turn off progressbar because it won't look nice in rmd
+  itoken(ids = jobsdata.testing.subset$id, progressbar = FALSE)
+         
+
+dtm_test = create_dtm(it_test, vectorizer)
+dtm_test <- as.matrix(dtm_test)
+dtm_test <- as.data.frame(dtm_test)
+```
+
+
+```{r}
+pred <- predict(fit, dtm_test,  type = 'response')
+pred <- ifelse(pred<0.5, "Non Data Science", "Data Science")
+```
+
+
+```{r}
+mean(pred==jobsdata.testing.subset$JobType)
 ```
 
 # Analysis
