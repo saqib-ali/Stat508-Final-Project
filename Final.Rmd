@@ -84,8 +84,8 @@ vocab
 vectorizer = vocab_vectorizer(vocab)
 t1 = Sys.time()
 dtm_train = create_dtm(it_train, vectorizer)
-dtm_train <- as.matrix(dtm_train)
-dtm_train <- as.data.frame(dtm_train)
+#dtm_train <- as.matrix(dtm_train)
+#dtm_train <- as.data.frame(dtm_train)
 
 ```
 
@@ -98,12 +98,13 @@ dim(jobsdata.training.subset)
 
 
 ```{r}
-dtm_train$JobTypeReponse <- ifelse(jobsdata.training.subset$JobType=="Data Science", 1, 0)
+JobTypeReponse <- ifelse(jobsdata.training.subset$JobType=="Data Science", 1, 0)
+
 ```
 
 
 ```{r}
-fit <- glm(JobTypeReponse ~ ., data = dtm_train, family=binomial)
+fit <- glm.fit(x=dtm_train, y=JobTypeReponse, family=binomial())
 ```
 
 
