@@ -16,14 +16,16 @@ library(caret)
 library(text2vec)
 library(tm)
 library(dplyr)
+library(data.table)
+library("pls")
 ```
 
 
 # Data
 ```{r}
 
-#JobsData <- read.csv("JobsData.csv", stringsAsFactors=FALSE, header = TRUE)
-#saveRDS(JobsData, file="JobsData.Rds")
+JobsData <- read.csv("JobsData.csv", stringsAsFactors=FALSE, header = TRUE)
+saveRDS(JobsData, file="JobsData.Rds")
 JobsData <- readRDS("JobsData.Rds")
 
 ```
@@ -35,21 +37,9 @@ JobsData$id <- seq.int(1:nrow(JobsData))
 ```
 
 ```{r}
-train <- createDataPartition(JobsData$JobType, p = .5, list=FALSE)
+train <- createDataPartition(JobsData$JobType, p = .01, list=FALSE)
 jobsdata.training.subset <- JobsData[train,]
 jobsdata.testing.subset <- JobsData[-train,]
-```
-
-
-```{r}
-
-
-#corpus <- VCorpus(VectorSource(jobsdata.training.data$JobDescription))
-
-#tdm <- DocumentTermMatrix(corpus, list(removePunctuation = TRUE, stopwords = TRUE, stemming = TRUE, removeNumbers = TRUE))
-#train <- as.matrix(tdm)
-#train <- as.data.frame(train)
-#train$JobTypeLabel <-  jobsdata.training.data$JobType
 ```
 
 
@@ -63,29 +53,37 @@ it_train = itoken(jobsdata.training.subset$JobDescription,
              tokenizer = tok_fun, 
              ids = jobsdata.training.subset$id, 
              progressbar = FALSE)
-vocab = create_vocabulary(it_train)
 
 
 ```
 
 ```{r}
+
+stop_words = read.csv("stopwords.csv", header = FALSE, stringsAsFactors=FALSE)
+stop_words <- as.character(stop_words$V1)
 train_tokens = jobsdata.training.subset$JobDescription %>% prep_fun %>% tok_fun
 it_train = itoken(train_tokens, 
                   ids = jobsdata.training.subset$id,
                   # turn off progressbar because it won't look nice in rmd
                   progressbar = FALSE)
 
-vocab = create_vocabulary(it_train)
-vocab
+vocab = create_vocabulary(it_train, stopwords = stop_words)
+
 ```
 
 
 ```{r}
-vectorizer = vocab_vectorizer(vocab)
-t1 = Sys.time()
+pruned_vocab = prune_vocabulary(vocab, 
+                                 term_count_min = 10, 
+                                 doc_proportion_max = 0.25,
+                                 doc_proportion_min = 0.001)
+#pruned_vocab
+vectorizer = vocab_vectorizer(pruned_vocab)
+
 dtm_train = create_dtm(it_train, vectorizer)
-#dtm_train <- as.matrix(dtm_train)
-#dtm_train <- as.data.frame(dtm_train)
+dtm_train <- as.matrix(dtm_train)
+dtm_train <- as.data.table(dtm_train)
+dim(dtm_train)
 
 ```
 
@@ -97,14 +95,23 @@ dim(jobsdata.training.subset)
 ```
 
 
+
+
 ```{r}
-JobTypeReponse <- ifelse(jobsdata.training.subset$JobType=="Data Science", 1, 0)
+dtm_train$JobTypeReponse <- ifelse(jobsdata.training.subset$JobType=="Data Science", 1, 0)
 
 ```
 
 
 ```{r}
-fit <- glm.fit(x=dtm_train, y=JobTypeReponse, family=binomial())
+#set.seed(1)
+#pcr.fit = pcr(JobTypeReponse ~., data=dtm_train, scale=TRUE, validation="CV") 
+#validationplot(pcr.fit, val.type="MSEP")
+```
+
+
+```{r}
+fit <- glm(dtm_train$JobTypeReponse~., data=dtm_train, family=binomial())
 ```
 
 
@@ -129,6 +136,11 @@ pred <- ifelse(pred<0.5, "Non Data Science", "Data Science")
 
 ```{r}
 mean(pred==jobsdata.testing.subset$JobType)
+```
+
+```{r}
+table(pred,jobsdata.testing.subset$JobType)
+
 ```
 
 # Analysis
