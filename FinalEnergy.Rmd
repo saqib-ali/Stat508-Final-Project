@@ -10,11 +10,11 @@ Author: Adam Behrendorff, Nicholas Napier, Saqib Ali
 
 
 ```{r}
-library(lubridate)
-library(caret)
-library(corrplot)
-library(sugrrants)
-library(dplyr)
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(corrplot))
+suppressMessages(library(sugrrants))
+suppressMessages(library(dplyr))
 
 ```
 
@@ -24,7 +24,6 @@ library(dplyr)
 
 ```{r}
 EnergyDataAggregate <- read.csv("EnergyDataAggregate.csv",stringsAsFactors = FALSE)
-dim(EnergyDataAggregate)
 EnergyDataAggregate$DATE <- as.Date(EnergyDataAggregate$DATE,format="%m/%d/%Y")
 ```
 
@@ -63,6 +62,5 @@ energyData.test=EnergyDataAggregate[-trainIndex,]
 ```
 
 ```{r}
-energyData.train
 ```
 
