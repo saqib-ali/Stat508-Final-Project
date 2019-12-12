@@ -1,11 +1,15 @@
 ---
 title: "Stat 508 - Final Project"
 output:
+  pdf_document: 
+    toc: true
+  html_notebook: default
   html_document:
     df_print: paged
-  html_notebook: default
-  pdf_document: default
-Author: Adam Behrendorff, Nicholas Napier, Saqib Ali
+author:
+- Adam Behrendorff
+- Nicholas Napier
+- Saqib Ali
 ---
 
 
@@ -15,6 +19,9 @@ suppressMessages(library(caret))
 suppressMessages(library(corrplot))
 suppressMessages(library(sugrrants))
 suppressMessages(library(dplyr))
+suppressMessages(library(MASS))
+suppressMessages(library(e1071))
+
 
 ```
 
@@ -25,17 +32,15 @@ suppressMessages(library(dplyr))
 ```{r}
 EnergyDataAggregate <- read.csv("EnergyDataAggregate.csv",stringsAsFactors = FALSE)
 EnergyDataAggregate$DATE <- as.Date(EnergyDataAggregate$DATE,format="%m/%d/%Y")
+EnergyDataAggregate$Weekend <- if_else(EnergyDataAggregate$DAYNAME %in% c("Saturday", "Sunday"), "Weekend", "Weekday")
+
 ```
 
 
-
-
-## Temporal Trend
-
-
+## Time-series Trend
 
 ```{r}
-p <- EnergyDataAggregate %>%  mutate(Weekend = if_else(DAYNAME %in% c("Saturday", "Sunday"), "Weekend", "Weekday")) %>%
+p <- EnergyDataAggregate %>%  
   frame_calendar(x = HOUR, y = GENERAL_SUPPLY_KWH, date = DATE) %>% 
   ggplot(aes(x = .HOUR, y = .GENERAL_SUPPLY_KWH, group = DATE, colour = Weekend)) +
   geom_line() +
@@ -46,21 +51,106 @@ prettify(p)
 
 # Analysis
 
+## Binary Response Variable
+Since we working on predicting a High Consumption vs. Low Consumption, we will make a HighEvergyUse binary variable based on the mean GENERAL_SUPPLY_KWH for the hour in the day
+
 ```{r}
-
-
-
-EnergyDataAggregate$HighEnergyUse <- ifelse(EnergyDataAggregate$GENERAL_SUPPLY_KWH>0.5,1,0)
-
-set.seed(1)
-
-#training and test set
-trainIndex <- createDataPartition(EnergyDataAggregate$GENERAL_SUPPLY_KWH, p = .5, list = FALSE, times = 1)
-energyData.train=EnergyDataAggregate[trainIndex,]
-energyData.test=EnergyDataAggregate[-trainIndex,]
+EnergyDataAggregate$HighEnergyUse <- ifelse(EnergyDataAggregate$GENERAL_SUPPLY_KWH>mean(EnergyDataAggregate$GENERAL_SUPPLY_KWH),1,0)
+EnergyDataAggregate$MONTH <- as.factor(EnergyDataAggregate$MONTH)
+EnergyDataAggregate$DAY <- as.factor(EnergyDataAggregate$DAY)
 
 ```
 
+
+## Spliting the Dataset
+
+We will split the dataset into training and testing splits. We will use all the data from before 2013 to build a model to predict Evergy Consumption for years 2013 and higher.
+
 ```{r}
+set.seed(1)
+
+#training and test set
+energyData.full <- EnergyDataAggregate
+energyData.train=EnergyDataAggregate[EnergyDataAggregate$YEAR<2013,]
+energyData.test=EnergyDataAggregate[EnergyDataAggregate$YEAR>2013,]
+
+```
+
+
+
+
+## Logistic Regression
+
+Let's build a Logistic Model using the training Data
+```{r}
+
+logit.fit <- glm(HighEnergyUse~Weekend+DAY+MONTH+DAYNAME+HOUR, data=energyData.train, family=binomial)
+
+
+```
+
+
+
+```{r}
+glm.probs=predict(logit.fit,energyData.test,type="response")
+glm.pred <- ifelse(glm.probs<0.5, 0, 1)
+
+pred.mean <- mean(glm.pred==energyData.test$HighEnergyUse)
+pred.mean
+```
+We observe that with Logistic Regression, we get and accurary rate of `r pred.mean`
+
+## LDA
+```{r}
+lda.fit=lda(HighEnergyUse~Weekend+DAY+MONTH+DAYNAME+HOUR, data=energyData.train)
+```
+
+
+```{r}
+lda.pred=predict(lda.fit, energyData.test)
+pred.mean <- mean(lda.pred$class==energyData.test$HighEnergyUse)
+```
+
+We observe that with LDA, we get and accurary rate of `r pred.mean`
+
+
+## QDA
+
+### With Day of the Month
+
+```{r}
+qda.fit=qda(HighEnergyUse~DAY+MONTH+DAYNAME+HOUR, data=energyData.train)
+```
+
+
+```{r}
+qda.pred=predict(qda.fit, energyData.test)
+pred.mean <- mean(qda.pred$class==energyData.test$HighEnergyUse)
+```
+We observe that with QDA, we get and accurary rate of `r pred.mean`
+
+
+### Without Day of the Month
+```{r}
+qda.fit=qda(HighEnergyUse~DAY+MONTH+DAYNAME+HOUR, data=energyData.train)
+```
+
+
+```{r}
+qda.pred=predict(qda.fit, energyData.test)
+pred.mean <- mean(qda.pred$class==energyData.test$HighEnergyUse)
+```
+We observe that with QDA, we get and accurary rate of `r pred.mean`
+
+
+
+
+## Support Vector Classifer
+```{r}
+
+
+#tune.out=tune(svm, HighEnergyUse~DAY+MONTH+DAYNAME+HOUR,data=energyData.full,kernel="linear",ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100)))
+
+
 ```
 
