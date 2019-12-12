@@ -1,10 +1,11 @@
 ---
 title: "Stat 508 - Final Project"
 output:
-  pdf_document: default
+  html_document:
+    df_print: paged
   html_notebook: default
-  
-Author: "Adam Behrendorff, Nicholas Napier, Saqib Ali"
+  pdf_document: default
+Author: Adam Behrendorff, Nicholas Napier, Saqib Ali
 ---
 
 
@@ -13,65 +14,24 @@ library(lubridate)
 library(caret)
 library(corrplot)
 library(sugrrants)
-library(readr)
 library(dplyr)
 
 ```
 
+# Introduction
+
+# Data
 
 ```{r}
-
-
-
-energyData <- as.data.frame(read.csv("EnergyData.csv",nrows=300000))
-energyData$DATE <- as.Date(energyData$READING_DATETIME)
-energyData$TIME <- as.numeric(factor(format(as.POSIXct(energyData$READING_DATETIME),"%H:%M:%S")))
-energyData$HOUR <- hour(energyData$READING_DATETIME)
-                              
-                              
-energyData$WEEKDAY <- as.numeric(factor(weekdays(energyData$DATE)))
-energyData$MONTH <- month(energyData$DATE)
-energyData$HighEnergyUse <- ifelse(energyData$GENERAL_SUPPLY_KWH>0.5,1,0)
-
-set.seed(1)
-
-#training and test set
-trainIndex <- createDataPartition(energyData$GENERAL_SUPPLY_KWH, p = .5, list = FALSE, times = 1)
-energyData.train=energyData[trainIndex,]
-energyData.test=energyData[-trainIndex,]
-
-```
-
-```{r}
-energyData.train
+EnergyDataAggregate <- read.csv("EnergyDataAggregate.csv",stringsAsFactors = FALSE)
+dim(EnergyDataAggregate)
+EnergyDataAggregate$DATE <- as.Date(EnergyDataAggregate$DATE,format="%m/%d/%Y")
 ```
 
 
 
-```{r}
-library(readr)
-EnergyData <- read.csv("CD_INTERVAL_READING_ALL_NO_QUOTES.csv",stringsAsFactors = FALSE)
-#dim(EnergyDataAggregate)
-```
 
-```{r}
-saveRDS(EnergyData, "EnergyData.Rds")
-```
-
-
-```{r}
-
-EnergyData %>% group_by(EnergyData$CALENDAR_KEY) %>% summarise(EnergyUsage = sum(EnergyData$GENERAL_SUPPLY_KWH), length(unique(EnergyData$CUSTOMER_ID)))
-
-```
-
-
-
-```{r}
-EnergyDataAggregate$DATE <- as.Date(EnergyDataAggregate$DATE,format="%d/%m/%Y")
-```
-
-
+## Temporal Trend
 
 
 
@@ -82,5 +42,27 @@ p <- EnergyDataAggregate %>%  mutate(Weekend = if_else(DAYNAME %in% c("Saturday"
   geom_line() +
   theme(legend.position = "bottom")
 prettify(p)
+```
+
+
+# Analysis
+
+```{r}
+
+
+
+EnergyDataAggregate$HighEnergyUse <- ifelse(EnergyDataAggregate$GENERAL_SUPPLY_KWH>0.5,1,0)
+
+set.seed(1)
+
+#training and test set
+trainIndex <- createDataPartition(EnergyDataAggregate$GENERAL_SUPPLY_KWH, p = .5, list = FALSE, times = 1)
+energyData.train=EnergyDataAggregate[trainIndex,]
+energyData.test=EnergyDataAggregate[-trainIndex,]
+
+```
+
+```{r}
+energyData.train
 ```
 
