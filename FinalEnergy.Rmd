@@ -8,17 +8,79 @@ Author: "Adam Behrendorff, Nicholas Napier, Saqib Ali"
 ---
 
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
-
 ```{r}
-plot(cars)
+library(lubridate)
+library(caret)
+library(corrplot)
+library(sugrrants)
+library(readr)
+library(dplyr)
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+```{r}
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+energyData <- as.data.frame(read.csv("EnergyData.csv",nrows=300000))
+energyData$DATE <- as.Date(energyData$READING_DATETIME)
+energyData$TIME <- as.numeric(factor(format(as.POSIXct(energyData$READING_DATETIME),"%H:%M:%S")))
+energyData$HOUR <- hour(energyData$READING_DATETIME)
+                              
+                              
+energyData$WEEKDAY <- as.numeric(factor(weekdays(energyData$DATE)))
+energyData$MONTH <- month(energyData$DATE)
+energyData$HighEnergyUse <- ifelse(energyData$GENERAL_SUPPLY_KWH>0.5,1,0)
+
+set.seed(1)
+
+#training and test set
+trainIndex <- createDataPartition(energyData$GENERAL_SUPPLY_KWH, p = .5, list = FALSE, times = 1)
+energyData.train=energyData[trainIndex,]
+energyData.test=energyData[-trainIndex,]
+
+```
+
+```{r}
+energyData.train
+```
+
+
+
+```{r}
+library(readr)
+EnergyData <- read.csv("CD_INTERVAL_READING_ALL_NO_QUOTES.csv",stringsAsFactors = FALSE)
+#dim(EnergyDataAggregate)
+```
+
+```{r}
+saveRDS(EnergyData, "EnergyData.Rds")
+```
+
+
+```{r}
+
+EnergyData %>% group_by(EnergyData$CALENDAR_KEY) %>% summarise(EnergyUsage = sum(EnergyData$GENERAL_SUPPLY_KWH), length(unique(EnergyData$CUSTOMER_ID)))
+
+```
+
+
+
+```{r}
+EnergyDataAggregate$DATE <- as.Date(EnergyDataAggregate$DATE,format="%d/%m/%Y")
+```
+
+
+
+
+
+```{r}
+p <- EnergyDataAggregate %>%  mutate(Weekend = if_else(DAYNAME %in% c("Saturday", "Sunday"), "Weekend", "Weekday")) %>%
+  frame_calendar(x = HOUR, y = GENERAL_SUPPLY_KWH, date = DATE) %>% 
+  ggplot(aes(x = .HOUR, y = .GENERAL_SUPPLY_KWH, group = DATE, colour = Weekend)) +
+  geom_line() +
+  theme(legend.position = "bottom")
+prettify(p)
+```
 
