@@ -148,12 +148,19 @@ We observe that with QDA, we get and accurary rate of `r pred.mean`
 
 ## Support Vector Classifer
 ```{r}
+tune.cost <- c(0.001, 0.01, 0.1, 1,5,10,100)
 
-
-tune.out=tune(svm, HighEnergyUse~DAY+MONTH+DAYNAME+HOUR,data=energyData.full,kernel="linear",ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100)))
+tune.out=tune(svm, HighEnergyUse~DAY+MONTH+DAYNAME+HOUR,data=energyData.full,kernel="linear",ranges=list(cost=tune.cost))
 
 
 ```
+
+```{r}
+bestmod=tune.out$best.mode
+ypred=predict(bestmod ,energyData.train)
+mean(ypred==energyData.train$HighEnergyUse)
+```
+
 
 
 ## Regression Trees
