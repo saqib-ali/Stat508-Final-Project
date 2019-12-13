@@ -21,6 +21,7 @@ suppressMessages(library(sugrrants))
 suppressMessages(library(dplyr))
 suppressMessages(library(MASS))
 suppressMessages(library(e1071))
+suppressMessages(library(tree))
 
 
 ```
@@ -55,7 +56,7 @@ prettify(p)
 Since we working on predicting a High Consumption vs. Low Consumption, we will make a HighEvergyUse binary variable based on the mean GENERAL_SUPPLY_KWH for the hour in the day
 
 ```{r}
-EnergyDataAggregate$HighEnergyUse <- ifelse(EnergyDataAggregate$GENERAL_SUPPLY_KWH>mean(EnergyDataAggregate$GENERAL_SUPPLY_KWH),1,0)
+EnergyDataAggregate$HighEnergyUse <- as.factor(ifelse(EnergyDataAggregate$GENERAL_SUPPLY_KWH>mean(EnergyDataAggregate$GENERAL_SUPPLY_KWH),1,0))
 EnergyDataAggregate$MONTH <- as.factor(EnergyDataAggregate$MONTH)
 EnergyDataAggregate$DAY <- as.factor(EnergyDataAggregate$DAY)
 
@@ -149,8 +150,27 @@ We observe that with QDA, we get and accurary rate of `r pred.mean`
 ```{r}
 
 
-#tune.out=tune(svm, HighEnergyUse~DAY+MONTH+DAYNAME+HOUR,data=energyData.full,kernel="linear",ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100)))
+tune.out=tune(svm, HighEnergyUse~DAY+MONTH+DAYNAME+HOUR,data=energyData.full,kernel="linear",ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100)))
 
 
 ```
+
+
+## Regression Trees
+
+```{r}
+EnergyData.tree <- tree(HighEnergyUse~READING_EPOCHTIME+Weekend+DAY+MONTH+DAYNAME+HOUR, energyData.train)
+ plot(EnergyData.tree) 
+ text(EnergyData.tree ,pretty=0)
+```
+
+```{r}
+ set.seed(3) 
+tree.pred=predict(EnergyData.tree,energyData.test,type="class") 
+table(tree.pred, energyData.test$HighEnergyUse)
+mean(tree.pred==energyData.test$HighEnergyUse)
+
+```
+
+
 
